@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 import barnum
+from datetime import datetime
 from faker import Faker
 fake = Faker()
 
@@ -83,6 +84,9 @@ sales['order_date'] = pd.to_datetime(sales.order_date)
 #generate customers df
 addresses = [barnum.create_city_state_zip() for x in range(2000)]
 
+start_date = datetime.strptime('2022-01-01', '%Y-%m-%d')
+end_date = datetime.strptime('2022-03-31', '%Y-%m-%d')
+
 customers_us = pd.DataFrame({'id': random.sample(range(1000, 8000), 2000),
                              'first_name': [fake.first_name() for x in range(2000)],
                              'last_name': [fake.last_name() for x in range(2000)],
@@ -90,7 +94,8 @@ customers_us = pd.DataFrame({'id': random.sample(range(1000, 8000), 2000),
                              'city': [x[1] for x in addresses],
                              'state': [x[2] for x in addresses],
                              'zipcode': [int(x[0]) for x in addresses],
-                             'country': 'US'
+                             'country': 'US',
+                             'join_date': [fake.date_between(start_date=start_date, end_date=end_date) for x in range(2000)]
                              })
 
 customers_int = pd.DataFrame({'id': random.sample(range(8001, 9999), 1000),
@@ -100,7 +105,8 @@ customers_int = pd.DataFrame({'id': random.sample(range(8001, 9999), 1000),
                              'city': [fake.city() for x in range(1000)],
                              'state': [fake.city() for x in range(1000)],
                              'zipcode': [fake.postcode() for x in range(1000)],
-                             'country': [fake.country_code() for x in range(1000) if x != 'US']
+                             'country': [fake.country_code() for x in range(1000) if x != 'US'],
+                             'join_date': [fake.date_between(start_date=start_date, end_date=end_date) for x in range(2000)]
                              })
 
 customers = pd.concat([customers_us, customers_int],
@@ -138,6 +144,7 @@ dispend = {
 }
 marketing['unit_spend'] =  marketing['utm_medium'].map(dispend)
 marketing['impressions'] = [int(round(random.normalvariate(100, 37), 0)) for x in range(marketing.shape[0])]
+marketing.reset_index(drop=True, inplace=True)
 
 with pd.ExcelWriter('/Users/alex/Downloads/ecommercesales.xlsx', engine='openpyxl') as writer:
     customers.to_excel(writer, sheet_name='customers')
